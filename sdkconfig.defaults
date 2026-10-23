@@ -1,0 +1,28 @@
+CONFIG_IDF_TARGET="esp32s3"
+
+# ESP32-S3-WROOM-1U-N8: 8 MB flash, no PSRAM.
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+# CONFIG_SPIRAM is not set
+
+# Wi-Fi and Bluetooth stay disabled (brief §2). The firmware never calls
+# esp_wifi_init(), and BT is compiled out.
+# CONFIG_BT_ENABLED is not set
+
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+CONFIG_FREERTOS_HZ=1000
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# Console and logs on the native USB-Serial-JTAG port (J3).
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+
+# A hung control task or idle task resets the CPU. The external TPS3850
+# separately opens the output relay when the audio task stops kicking WDI.
+CONFIG_ESP_TASK_WDT_EN=y
+CONFIG_ESP_TASK_WDT_PANIC=y
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=3
+CONFIG_ESP_SYSTEM_PANIC_PRINT_REBOOT=y
+
+# FAULT_N interrupt runs from IRAM so it still mutes during flash operations.
+CONFIG_GPIO_CTRL_FUNC_IN_IRAM=y

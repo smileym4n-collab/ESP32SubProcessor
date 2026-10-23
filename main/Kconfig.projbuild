@@ -1,0 +1,85 @@
+menu "P68 Subwoofer DSP"
+
+    choice P68_AUDIO_BLOCK
+        prompt "I2S DMA block size"
+        default P68_AUDIO_BLOCK_32
+        help
+            Frames per DMA buffer. Smaller blocks lower latency
+            (DESIGN_REVIEW §3: ~2.3 ms at 32, ~1.3 ms at 16) at the cost of
+            more interrupts and task wake-ups.
+
+        config P68_AUDIO_BLOCK_32
+            bool "32 frames (0.67 ms)"
+        config P68_AUDIO_BLOCK_16
+            bool "16 frames (0.33 ms)"
+    endchoice
+
+    config P68_AUDIO_BLOCK_FRAMES
+        int
+        default 16 if P68_AUDIO_BLOCK_16
+        default 32
+
+    config P68_AUDIO_DMA_DESC_NUM
+        int "I2S DMA buffers per direction"
+        range 2 8
+        default 3
+        help
+            The TX queue adds roughly this many blocks of latency. 2 is the
+            DESIGN_REVIEW estimate; 3 gives one block of scheduling margin.
+
+    config P68_HPF_HZ
+        int "Subsonic high-pass corner (Hz), 2nd-order Butterworth"
+        range 5 40
+        default 15
+        help
+            Mandatory DC/subsonic protection (brief §5). Phase 1 default,
+            to be confirmed by Tom for Phase 2.
+
+    config P68_HPF_USE_ESP_DSP_BIQUAD
+        bool "Run the HPF on the ESP-DSP direct-form-II biquad instead of the SVF"
+        default n
+        help
+            For bench comparison only. In float32 the ESP-DSP DF2 biquad leaves
+            about -38 dB of error on a 20 Hz signal through a 15 Hz high-pass
+            (the SVF leaves about -95 dB). See test/host.
+
+    config P68_UNMUTE_RAMP_MS
+        int "Gain ramp-up time after arming (ms)"
+        range 10 2000
+        default 200
+
+    config P68_MUTE_RAMP_MS
+        int "Gain ramp-down time before a mode change or disarm (ms)"
+        range 5 500
+        default 50
+
+    config P68_MODE_SETTLE_MS
+        int "Settle time after an input or ADC change before re-arming (ms)"
+        range 200 5000
+        default 200
+        help
+            Brief §5: wait at least 200 ms for coupling caps and ADC fade-in.
+
+    config P68_FAULT_N_STABLE_MS
+        int "FAULT_N must be high this long before arming (ms)"
+        range 250 5000
+        default 500
+
+    config P68_FAULT_SETTLE_MS
+        int "Settle time after a fault before automatic re-arm (ms)"
+        range 500 10000
+        default 1000
+
+    config P68_AUTO_REARM_MAX
+        int "Automatic re-arms allowed per minute before LOCKOUT"
+        range 1 10
+        default 3
+
+    config P68_REQUIRE_ADC_STATUS
+        bool "Require PCM1863 status (run, 48 kHz, 64 fs, supplies good) to arm"
+        default y
+        help
+            Disable only if bench measurement shows the expected status values
+            in pcm1863_status_ok() are wrong for this board.
+
+endmenu
